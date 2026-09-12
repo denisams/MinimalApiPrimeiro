@@ -1,11 +1,9 @@
-using System.Diagnostics.Contracts;
 using Flunt.Notifications;
 using Flunt.Validations;
 
 public class CreateTodosViewModel : Notifiable<Notification>
 {
-    public string Title { get; set; }
-
+    public required string Title { get; set; }
 
     public Todo MapTo()
     {
@@ -16,6 +14,6 @@ public class CreateTodosViewModel : Notifiable<Notification>
 
         AddNotifications(contract);
 
-        return new Todo(Guid.NewGuid(), Title, false);
+        return new Todo(Guid.CreateVersion7(), Title, false);
     }
 }

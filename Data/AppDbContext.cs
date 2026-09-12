@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore;
 
 public class AppDbContext : DbContext
 {
-    public DbSet<Todo> Todos { get; set; }
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder options) => options.UseSqlite("DataSource=app.bd;Cache=Shared");
+    public DbSet<Todo> Todos { get; set; } = null!;
 }
-
-

@@ -1,37 +1,47 @@
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<AppDbContext>();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// app.MapGet("/", () => {
-//     var todo = new Todo(Guid.NewGuid(), "Testando Minimal Api", false);
-//     return Results.Ok(todo);
-// });
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-app.UseSwagger();
+app.UseHttpsRedirection();
 
-app.MapGet("v1/todos", (AppDbContext context) => {
-    var todos = context.Todos.ToList();
-    return Results.Ok(todos);
-});
+var todos = app.MapGroup("v1/todos").WithTags("Todos");
 
-app.MapPost("v1/todos", (
-                        AppDbContext context,
-                        CreateTodosViewModel model) => {
+todos.MapGet("", async (AppDbContext context) =>
+{
+    var result = await context.Todos.AsNoTracking().ToListAsync();
+    return Results.Ok(result);
+})
+.Produces<List<Todo>>();
+
+todos.MapPost("", async (
+    AppDbContext context,
+    CreateTodosViewModel model) =>
+{
     var todo = model.MapTo();
 
-    if(!model.IsValid)
+    if (!model.IsValid)
         return Results.BadRequest(model.Notifications);
 
     context.Todos.Add(todo);
-    context.SaveChanges();
+    await context.SaveChangesAsync();
 
     return Results.Created($"/v1/todos/{todo.Id}", todo);
-}).Produces<Todo>();
-
-app.UseSwaggerUI();
+})
+.Produces<Todo>(StatusCodes.Status201Created)
+.Produces(StatusCodes.Status400BadRequest);
 
 app.Run();
